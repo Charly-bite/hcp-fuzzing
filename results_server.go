@@ -1,4 +1,4 @@
-﻿package main
+package main
 
 import (
 	"bufio"
@@ -21,12 +21,15 @@ import (
 
 // --- Configuration ---
 const (
-	fuzzerDir  = "/cluster_data/fuzzer"
-	logDir     = "/cluster_data/fuzz_logs"
 	runScript  = "/cluster_data/fuzzer/run_fuzz.sh"
 	llmBinary  = "/cluster_data/llama.cpp/build/bin/llama-cli"
 	llmModel   = "/cluster_data/models/Meta-Llama-3-8B-Instruct-Q4_K_M.gguf"
 	listenAddr = "192.168.2.172:5006"
+)
+
+var (
+	fuzzerDir  = "/cluster_data/fuzzer"
+	logDir     = "/cluster_data/fuzz_logs"
 )
 
 var projectRoot string
@@ -326,7 +329,7 @@ func apiRawLogs(w http.ResponseWriter, r *http.Request) {
 	if rawStr == "" {
 		fmt.Fprintf(w, "No raw logs found.")
 	} else {
-		fmt.Fprintf(w, rawStr)
+		fmt.Fprint(w, rawStr)
 	}
 }
 
