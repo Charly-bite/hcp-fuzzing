@@ -3,6 +3,7 @@ fuzzer.exe
 mockproxies.exe
 stealth_fuzzer
 results_server
+dev_server
 *.exe
 *.bin
 *.test
