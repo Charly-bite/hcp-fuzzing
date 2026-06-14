@@ -52,11 +52,11 @@ func getSoft404Baseline(fc *FuzzClient, base string) (bool, int, int) {
 	return false, 0, 0
 }
 
-// FuzzDirectories tests the target URL with paths from the wordlist 
+// FuzzDirectories tests the target URL with paths from the wordlist
 // and adds successful findings (200 OK) to the allLinks map
 func FuzzDirectories(fc *FuzzClient, targetBase string, words []string, allLinks *[]string, validStatuses []int) {
 	base := strings.TrimRight(targetBase, "/")
-	
+
 	// Auto-calibrate for Soft 404s
 	isSoft404, baselineBytes, baselineWords := getSoft404Baseline(fc, base)
 	if isSoft404 {
@@ -68,7 +68,7 @@ func FuzzDirectories(fc *FuzzClient, targetBase string, words []string, allLinks
 	for _, word := range words {
 		// Append the payload string
 		testURL := base + "/" + word
-		
+
 		req, err := http.NewRequestWithContext(context.Background(), "GET", testURL, nil)
 		if err != nil {
 			continue
@@ -78,30 +78,30 @@ func FuzzDirectories(fc *FuzzClient, targetBase string, words []string, allLinks
 		if err != nil || resp == nil {
 			continue
 		}
-		
+
 		// If page exists, record it
 		if containsInt(validStatuses, resp.StatusCode) {
 			bodyBytes, _ := io.ReadAll(resp.Body)
 			currentBytes := len(bodyBytes)
 			currentWords := len(strings.Fields(string(bodyBytes)))
-			
+
 			isFalsePositive := false
 			if isSoft404 && resp.StatusCode == 200 {
 				wordDiff := currentWords - baselineWords
 				if wordDiff < 0 {
 					wordDiff = -wordDiff
 				}
-				
+
 				margin := float64(baselineWords) * 0.05
 				if margin < 5 {
 					margin = 5
 				}
-				
+
 				byteDiff := currentBytes - baselineBytes
 				if byteDiff < 0 {
 					byteDiff = -byteDiff
 				}
-				
+
 				// Some sites reflect the injected URL path in the 404 page body.
 				// This heavily alters the byte size if the paylaods differ in length by a lot.
 				// By using a 15% byte margin and word counts, we account for those dynamic Reflections.
@@ -109,7 +109,7 @@ func FuzzDirectories(fc *FuzzClient, targetBase string, words []string, allLinks
 				if byteMargin < 50 {
 					byteMargin = 50
 				}
-				
+
 				// Identify as soft 404 if content length and word count are within margins
 				if float64(wordDiff) <= margin && float64(byteDiff) <= byteMargin {
 					isFalsePositive = true

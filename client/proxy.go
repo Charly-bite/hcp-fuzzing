@@ -40,14 +40,14 @@ func (pm *ProxyManager) GetProxy(req *http.Request) (*url.URL, error) {
 	if len(pm.proxies) == 0 {
 		return nil, nil
 	}
-	
+
 	// Round-robin traffic distribution
 	index := atomic.AddUint64(&pm.counter, 1) % uint64(len(pm.proxies))
 	proxy := pm.proxies[index]
-	
+
 	log.Printf("[Phase 3] Routing request to %s via Proxy: %s", req.URL.Host, proxy.String())
-	
-	// For lab environments without actual proxies running on these ports, 
+
+	// For lab environments without actual proxies running on these ports,
 	// returning the proxy here would normally trigger a connection refused error.
 	// We return it anyway to demonstrate the actual architecture hooking into the standard library.
 	return proxy, nil

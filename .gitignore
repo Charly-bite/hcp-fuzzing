@@ -21,6 +21,8 @@ config/local_auth.json
 Fuzzing_Report.html
 nohup.out
 dummy.log
+coverage
+coverage.out
 
 # Build Artifacts
 /cluster_data/

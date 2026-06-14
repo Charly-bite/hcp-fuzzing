@@ -57,7 +57,7 @@ func (fc *FuzzClient) Do(req *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 
-	log.Printf("[INFO] %s %s - Status: %d - Time: %v - ContentLength: %d", 
+	log.Printf("[INFO] %s %s - Status: %d - Time: %v - ContentLength: %d",
 		req.Method, req.URL.String(), resp.StatusCode, duration, resp.ContentLength)
 
 	return resp, nil

@@ -4,13 +4,13 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-	"io"
 
 	"stealthfuzzer/client"
 )
@@ -30,7 +30,7 @@ func startMockProxy(addr string) {
 		log.Printf("   [MOCK PROXY %s] Routing %s request to %s", addr, r.Method, r.URL.Host)
 		r.RequestURI = ""
 		r.Header.Del("Proxy-Connection")
-		
+
 		resp, err := http.DefaultClient.Do(r)
 		if err != nil {
 			http.Error(w, err.Error(), 502)
@@ -61,7 +61,7 @@ func main() {
 
 	// Create Rate limiter: 2 Requests Per Second, 200ms - 2000ms Jitter (as per Web.json spec)
 	rateLimiter := client.NewAdaptiveRateLimiter(2.0, 200*time.Millisecond, 2000*time.Millisecond)
-	
+
 	// Initialize Proxy Manager (Distribution Layer)
 	// NOTE: Disabled the local mock proxy list because those tiny HTTP servers
 	// don't natively support full TLS HTTPS tunneling (CONNECT verb) yet.
@@ -170,7 +170,7 @@ func main() {
 	// Output report logic
 	reportFile := "Fuzzing_Report.html"
 	client.GenerateReport(allLinks, reportFile)
-	
+
 	log.Printf("\n-> Crawl complete! Extracted %d unique links.", len(allLinks))
 	log.Printf("-> Downloadable Report generated at: ./%s\n", reportFile)
 }

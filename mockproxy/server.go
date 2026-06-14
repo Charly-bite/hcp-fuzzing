@@ -50,7 +50,7 @@ func startProxy(port string) {
 
 func main() {
 	log.Println("Starting Mock Proxy Fleet for Phase 3...")
-	
+
 	// Start 3 independent local proxies
 	go startProxy(":8080") // US-EAST
 	go startProxy(":8081") // EU-WEST

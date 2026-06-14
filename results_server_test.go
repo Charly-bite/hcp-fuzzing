@@ -1387,12 +1387,12 @@ func TestFileEndpoint_MethodRouting(t *testing.T) {
 func TestApiAction_Launch(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/action", nil)
 	req.Form = url.Values{
-		"action":  {"launch"},
-		"url":     {"https://example.com"},
-		"filters": {"200"},
-		"wordlist":{"test.txt"},
-		"depth":   {""},
-		"modes":   {"subdomain"},
+		"action":   {"launch"},
+		"url":      {"https://example.com"},
+		"filters":  {"200"},
+		"wordlist": {"test.txt"},
+		"depth":    {""},
+		"modes":    {"subdomain"},
 	}
 	rr := httptest.NewRecorder()
 	apiAction(rr, req)
@@ -1976,7 +1976,9 @@ func TestGetWordlists_RealData(t *testing.T) {
 	}
 	found := false
 	for _, w := range result {
-		if w == "test.txt" { found = true }
+		if w == "test.txt" {
+			found = true
+		}
 	}
 	if !found {
 		t.Errorf("expected test.txt in wordlists: %v", result)

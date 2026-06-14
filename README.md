@@ -28,10 +28,35 @@ A high-performance, distributed web fuzzing framework designed for stealthy enum
 
 ## Getting Started
 
-1.  Configure your target URL and status filters in the Command Center.
-2.  Select a wordlist from the pre-loaded options.
-3.  Choose your desired Advanced Fuzzing Modes.
-4.  Launch the campaign and watch the real-time terminal.
+### Prerequisites
+- Go 1.18 or higher.
+- Access to a Slurm cluster (optional, for distributed fuzzing).
+
+### Installation & Usage
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/Charly-bite/HCP_Fuzzing.git
+    cd HCP_Fuzzing
+    ```
+
+2.  **Build the binaries:**
+    ```bash
+    go build -o stealth_fuzzer main.go
+    go build -o results_server results_server.go
+    ```
+
+3.  **Run the orchestrator:**
+    Configure your target URL and status filters in the Command Center, then run the launcher:
+    ```bash
+    ./run_fuzz.sh
+    ```
+
+## Contributing
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 *Created for the HCP Cluster Environment.*

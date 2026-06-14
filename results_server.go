@@ -28,8 +28,8 @@ const (
 )
 
 var (
-	fuzzerDir  = "/cluster_data/fuzzer"
-	logDir     = "/cluster_data/fuzz_logs"
+	fuzzerDir = "/cluster_data/fuzzer"
+	logDir    = "/cluster_data/fuzz_logs"
 )
 
 var projectRoot string
@@ -154,7 +154,9 @@ func getProgress(wordlistName string) (int, int) {
 }
 
 func splitClean(s string) []string {
-	if s == "" { return nil }
+	if s == "" {
+		return nil
+	}
 	parts := strings.Split(s, ",")
 	var cleaned []string
 	for _, p := range parts {
@@ -167,26 +169,37 @@ func splitClean(s string) []string {
 }
 
 func matchFilters(line string, filters, excludes []string, statusRe, sizeRe *regexp.Regexp) bool {
-	if len(filters) == 0 { return false }
+	if len(filters) == 0 {
+		return false
+	}
 	if !strings.Contains(line, "[+] Found") {
 		return false
 	}
 
 	statusMatches := statusRe.FindStringSubmatch(line)
-	if len(statusMatches) < 2 { return false }
-	
+	if len(statusMatches) < 2 {
+		return false
+	}
+
 	status := statusMatches[1]
 	statusOk := false
 	for _, f := range filters {
-		if status == f { statusOk = true; break }
+		if status == f {
+			statusOk = true
+			break
+		}
 	}
-	if !statusOk { return false }
-	
+	if !statusOk {
+		return false
+	}
+
 	sizeMatches := sizeRe.FindStringSubmatch(line)
 	if len(sizeMatches) >= 2 {
 		size := sizeMatches[1]
 		for _, e := range excludes {
-			if size == e { return false }
+			if size == e {
+				return false
+			}
 		}
 	}
 	return true
@@ -195,16 +208,18 @@ func matchFilters(line string, filters, excludes []string, statusRe, sizeRe *reg
 func gatherFindingsStr(filters, excludeSizes string) string {
 	statusRegex := regexp.MustCompile(`Status: (\d+)`)
 	sizeRegex := regexp.MustCompile(`(?:Size|ContentLength): (\d+)`)
-	
+
 	filterList := splitClean(filters)
 	excludeList := splitClean(excludeSizes)
-	
+
 	files, _ := filepath.Glob(filepath.Join(logDir, "*.log"))
 	var sb strings.Builder
 	count := 0
-	
+
 	for _, file := range files {
-		if filepath.Base(file) == "dashboard.log" { continue }
+		if filepath.Base(file) == "dashboard.log" {
+			continue
+		}
 		f, _ := os.Open(file)
 		scanner := bufio.NewScanner(f)
 		for scanner.Scan() {
@@ -212,11 +227,15 @@ func gatherFindingsStr(filters, excludeSizes string) string {
 			if matchFilters(line, filterList, excludeList, statusRegex, sizeRegex) {
 				sb.WriteString(line + "\n")
 				count++
-				if count > 100 { break } 
+				if count > 100 {
+					break
+				}
 			}
 		}
 		f.Close()
-		if count > 100 { break }
+		if count > 100 {
+			break
+		}
 	}
 	return sb.String()
 }
@@ -233,10 +252,14 @@ func getRawLogs(fileName, filterText string) string {
 	filterText = strings.ToLower(filterText)
 
 	for _, file := range files {
-		if filepath.Base(file) == "dashboard.log" { continue }
+		if filepath.Base(file) == "dashboard.log" {
+			continue
+		}
 		f, err := os.Open(file)
-		if err != nil { continue }
-		
+		if err != nil {
+			continue
+		}
+
 		scanner := bufio.NewScanner(f)
 		for scanner.Scan() {
 			line := scanner.Text()
@@ -260,7 +283,7 @@ func getRawLogs(fileName, filterText string) string {
 func apiStatus(w http.ResponseWriter, r *http.Request) {
 	wordlist := r.URL.Query().Get("wordlist")
 	total, processed := getProgress(wordlist)
-	
+
 	data := map[string]interface{}{
 		"wordlists": getWordlists(),
 		"logFiles":  getLogFiles(),
@@ -276,20 +299,22 @@ func apiStatus(w http.ResponseWriter, r *http.Request) {
 func apiFindings(w http.ResponseWriter, r *http.Request) {
 	filters := r.URL.Query().Get("filters")
 	excludeSizes := r.URL.Query().Get("exclude_sizes")
-	
+
 	statusRegex := regexp.MustCompile(`Status: (\d+)`)
 	sizeRegex := regexp.MustCompile(`(?:Size|ContentLength): (\d+)`)
 	urlRegex := regexp.MustCompile(`(https?://[^\s]+)`)
-	
+
 	filterList := splitClean(filters)
 	excludeList := splitClean(excludeSizes)
-	
+
 	files, _ := filepath.Glob(filepath.Join(logDir, "*.log"))
 	w.Header().Set("Content-Type", "text/html")
-	
+
 	count := 0
 	for _, file := range files {
-		if filepath.Base(file) == "dashboard.log" { continue }
+		if filepath.Base(file) == "dashboard.log" {
+			continue
+		}
 		f, _ := os.Open(file)
 		scanner := bufio.NewScanner(f)
 		for scanner.Scan() {
@@ -298,11 +323,15 @@ func apiFindings(w http.ResponseWriter, r *http.Request) {
 				urlMatch := urlRegex.FindString(line)
 				statusMatch := statusRegex.FindStringSubmatch(line)
 				sizeMatch := sizeRegex.FindStringSubmatch(line)
-				
+
 				status := ""
-				if len(statusMatch) > 1 { status = statusMatch[1] }
+				if len(statusMatch) > 1 {
+					status = statusMatch[1]
+				}
 				size := ""
-				if len(sizeMatch) > 1 { size = sizeMatch[1] }
+				if len(sizeMatch) > 1 {
+					size = sizeMatch[1]
+				}
 
 				if urlMatch != "" {
 					fmt.Fprintf(w, "[%s] <a href='%s' target='_blank' class='finding-link'>%s</a> (Size: %s)\n", status, urlMatch, urlMatch, size)
@@ -322,10 +351,10 @@ func apiFindings(w http.ResponseWriter, r *http.Request) {
 func apiRawLogs(w http.ResponseWriter, r *http.Request) {
 	fileName := r.URL.Query().Get("raw_file")
 	filterText := strings.ToLower(r.URL.Query().Get("raw_filter"))
-	
+
 	rawStr := getRawLogs(fileName, filterText)
 	w.Header().Set("Content-Type", "text/plain")
-	
+
 	if rawStr == "" {
 		fmt.Fprintf(w, "No raw logs found.")
 	} else {
@@ -337,16 +366,18 @@ func apiAction(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	action := r.FormValue("action")
 	msg := ""
-	
+
 	switch action {
 	case "launch":
 		targetUrl := r.FormValue("url")
 		filters := r.FormValue("filters")
 		wordlist := r.FormValue("wordlist")
 		depth := r.FormValue("depth")
-		if depth == "" { depth = "2" }
+		if depth == "" {
+			depth = "2"
+		}
 		modes := r.FormValue("modes")
-		
+
 		cmd := exec.Command(runScript, targetUrl, filters, wordlist, depth, modes)
 		if err := cmd.Start(); err != nil {
 			msg = fmt.Sprintf("Error launching: %v", err)
@@ -371,7 +402,7 @@ func apiAction(w http.ResponseWriter, r *http.Request) {
 	default:
 		msg = "Unknown action."
 	}
-	
+
 	httpJSON(w, 200, map[string]string{"message": msg})
 }
 
@@ -379,9 +410,9 @@ func apiAnalyze(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	promptType := r.FormValue("prompt_type")
 	sourceType := r.FormValue("source_type")
-	
+
 	var dataToAnalyze string
-	
+
 	if sourceType == "findings" {
 		filters := r.FormValue("filters")
 		excludeSizes := r.FormValue("exclude_sizes")
@@ -396,7 +427,7 @@ func apiAnalyze(w http.ResponseWriter, r *http.Request) {
 		}
 		dataToAnalyze = strings.Join(lines, "\n")
 	}
-	
+
 	if dataToAnalyze == "" {
 		httpJSON(w, 200, map[string]string{"report": "No data available to analyze based on current filters."})
 		return
@@ -413,10 +444,10 @@ func apiAnalyze(w http.ResponseWriter, r *http.Request) {
 	default:
 		systemPrompt = "Analyze the following logs for security relevance."
 	}
-	
+
 	fullPrompt := fmt.Sprintf("%s\n\n%s", systemPrompt, dataToAnalyze)
-	
-	cmd := exec.Command("mpirun", 
+
+	cmd := exec.Command("mpirun",
 		"--mca", "btl_tcp_if_include", "192.168.1.0/24",
 		"--mca", "btl", "tcp,self",
 		"--host", "node01:12,node02:4,node03:16,node04:16,node06:12",
@@ -426,7 +457,7 @@ func apiAnalyze(w http.ResponseWriter, r *http.Request) {
 		"-p", fullPrompt,
 		"-n", "256",
 	)
-	
+
 	out, err := cmd.CombinedOutput()
 	report := ""
 	if err != nil {
@@ -440,10 +471,9 @@ func apiAnalyze(w http.ResponseWriter, r *http.Request) {
 			report = res
 		}
 	}
-	
+
 	httpJSON(w, 200, map[string]string{"report": report})
 }
-
 
 // ================================================================
 //   DEV CENTER APIS (FILE MANAGER, TERMINAL, HTTP, LOCAL FUZZ)
@@ -457,7 +487,9 @@ type FileEntry struct {
 
 func apiListFiles(w http.ResponseWriter, r *http.Request) {
 	reqPath := r.URL.Query().Get("path")
-	if reqPath == "" { reqPath = "." }
+	if reqPath == "" {
+		reqPath = "."
+	}
 	dirPath, err := safePath(reqPath)
 	if err != nil {
 		httpJSON(w, 400, map[string]string{"error": err.Error()})
@@ -471,19 +503,27 @@ func apiListFiles(w http.ResponseWriter, r *http.Request) {
 	var dirs, files []FileEntry
 	for _, e := range entries {
 		name := e.Name()
-		if hiddenEntries[name] { continue }
+		if hiddenEntries[name] {
+			continue
+		}
 		fe := FileEntry{Name: name, IsDir: e.IsDir()}
 		if !e.IsDir() {
 			if info, err := e.Info(); err == nil {
 				fe.Size = info.Size()
 			}
 		}
-		if e.IsDir() { dirs = append(dirs, fe) } else { files = append(files, fe) }
+		if e.IsDir() {
+			dirs = append(dirs, fe)
+		} else {
+			files = append(files, fe)
+		}
 	}
 	sort.Slice(dirs, func(i, j int) bool { return strings.ToLower(dirs[i].Name) < strings.ToLower(dirs[j].Name) })
 	sort.Slice(files, func(i, j int) bool { return strings.ToLower(files[i].Name) < strings.ToLower(files[j].Name) })
 	result := append(dirs, files...)
-	if result == nil { result = []FileEntry{} }
+	if result == nil {
+		result = []FileEntry{}
+	}
 	httpJSON(w, 200, result)
 }
 
@@ -646,13 +686,17 @@ func handleTerminalWS(w http.ResponseWriter, r *http.Request) {
 					break
 				}
 			}
-			if err != nil { break }
+			if err != nil {
+				break
+			}
 		}
 	}()
 
 	for {
 		_, msg, err := conn.ReadMessage()
-		if err != nil { break }
+		if err != nil {
+			break
+		}
 		stdin.Write(msg)
 		stdin.Write([]byte("\r\n"))
 	}
@@ -680,10 +724,14 @@ func apiSendRequest(w http.ResponseWriter, r *http.Request) {
 		httpJSON(w, 400, map[string]string{"error": "URL is required"})
 		return
 	}
-	if req.Method == "" { req.Method = "GET" }
+	if req.Method == "" {
+		req.Method = "GET"
+	}
 
 	var bodyReader io.Reader
-	if req.Body != "" { bodyReader = strings.NewReader(req.Body) }
+	if req.Body != "" {
+		bodyReader = strings.NewReader(req.Body)
+	}
 
 	httpReq, err := http.NewRequest(req.Method, req.URL, bodyReader)
 	if err != nil {
@@ -691,7 +739,9 @@ func apiSendRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for k, v := range req.Headers {
-		if strings.TrimSpace(k) != "" { httpReq.Header.Set(k, v) }
+		if strings.TrimSpace(k) != "" {
+			httpReq.Header.Set(k, v)
+		}
 	}
 
 	client := &http.Client{Timeout: 30 * time.Second}
@@ -707,7 +757,9 @@ func apiSendRequest(w http.ResponseWriter, r *http.Request) {
 
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, 2<<20))
 	respHeaders := make(map[string]string)
-	for k, v := range resp.Header { respHeaders[k] = strings.Join(v, ", ") }
+	for k, v := range resp.Header {
+		respHeaders[k] = strings.Join(v, ", ")
+	}
 
 	httpJSON(w, 200, map[string]interface{}{
 		"status":     resp.StatusCode,
@@ -741,8 +793,12 @@ func apiFuzzLaunch(w http.ResponseWriter, r *http.Request) {
 		httpJSON(w, 200, map[string]string{"error": "Target URL is required"})
 		return
 	}
-	if req.Depth == "" { req.Depth = "2" }
-	if req.Filters == "" { req.Filters = "200" }
+	if req.Depth == "" {
+		req.Depth = "2"
+	}
+	if req.Filters == "" {
+		req.Filters = "200"
+	}
 
 	args := []string{"run", "main.go", "-url", req.URL, "-filters", req.Filters, "-depth", req.Depth}
 	if req.Wordlist != "" {
@@ -776,7 +832,9 @@ func apiFuzzLaunch(w http.ResponseWriter, r *http.Request) {
 		for scanner.Scan() {
 			fuzzMu.Lock()
 			fuzzLog = append(fuzzLog, scanner.Text())
-			if len(fuzzLog) > 500 { fuzzLog = fuzzLog[len(fuzzLog)-500:] }
+			if len(fuzzLog) > 500 {
+				fuzzLog = fuzzLog[len(fuzzLog)-500:]
+			}
 			fuzzMu.Unlock()
 		}
 		fuzzCmd.Wait()
@@ -807,7 +865,9 @@ func apiFuzzStatus(w http.ResponseWriter, r *http.Request) {
 
 	wlFiles, _ := filepath.Glob(filepath.Join(projectRoot, "wordlists", "*.txt"))
 	var wordlists []string
-	for _, f := range wlFiles { wordlists = append(wordlists, filepath.Base(f)) }
+	for _, f := range wlFiles {
+		wordlists = append(wordlists, filepath.Base(f))
+	}
 	logCopy := make([]string, len(fuzzLog))
 	copy(logCopy, fuzzLog)
 
@@ -844,18 +904,22 @@ func apiGitInfo(w http.ResponseWriter, r *http.Request) {
 	action := r.URL.Query().Get("action")
 	var cmd *exec.Cmd
 	switch action {
-	case "diff": cmd = exec.Command("git", "diff", "--stat")
-	case "log": cmd = exec.Command("git", "log", "--oneline", "-20")
-	default: cmd = exec.Command("git", "status", "--short", "--branch")
+	case "diff":
+		cmd = exec.Command("git", "diff", "--stat")
+	case "log":
+		cmd = exec.Command("git", "log", "--oneline", "-20")
+	default:
+		cmd = exec.Command("git", "status", "--short", "--branch")
 	}
 	cmd.Dir = projectRoot
 
 	out, err := cmd.CombinedOutput()
 	result := string(out)
-	if err != nil { result = "Git: " + err.Error() + "\n" + result }
+	if err != nil {
+		result = "Git: " + err.Error() + "\n" + result
+	}
 	httpJSON(w, 200, map[string]string{"output": result})
 }
-
 
 // ================================================================
 //   DEPLOY PIPELINE
@@ -937,17 +1001,21 @@ func main() {
 	http.HandleFunc("/api/files", apiListFiles)
 	http.HandleFunc("/api/file", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
-		case "GET": apiReadFile(w, r)
-		case "POST": apiWriteFile(w, r)
-		case "DELETE": apiDeleteFile(w, r)
-		default: http.Error(w, "Method not allowed", 405)
+		case "GET":
+			apiReadFile(w, r)
+		case "POST":
+			apiWriteFile(w, r)
+		case "DELETE":
+			apiDeleteFile(w, r)
+		default:
+			http.Error(w, "Method not allowed", 405)
 		}
 	})
 	http.HandleFunc("/api/file/create", apiCreateFile)
 	http.HandleFunc("/api/file/rename", apiRenameFile)
 	http.HandleFunc("/ws/terminal", handleTerminalWS)
 	http.HandleFunc("/api/request", apiSendRequest)
-	
+
 	// Local Dev Fuzzer
 	http.HandleFunc("/api/fuzz/launch", apiFuzzLaunch)
 	http.HandleFunc("/api/fuzz/stop", apiFuzzStop)

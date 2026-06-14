@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// RandomizeQueryParams takes a base URL and a map of query parameters, 
+// RandomizeQueryParams takes a base URL and a map of query parameters,
 // then shuffles their order to evade WAFs using static regex pattern matching.
 func RandomizeQueryParams(baseURL string, params map[string]string) string {
 	if len(params) == 0 {
@@ -29,7 +29,7 @@ func RandomizeQueryParams(baseURL string, params map[string]string) string {
 	}
 
 	queryStr := strings.Join(queryParts, "&")
-	
+
 	// Check if base URL already has parameters
 	if strings.Contains(baseURL, "?") {
 		if strings.HasSuffix(baseURL, "?") || strings.HasSuffix(baseURL, "&") {

@@ -20,7 +20,7 @@ type AdaptiveRateLimiter struct {
 func NewAdaptiveRateLimiter(reqPerSec float64, minJitter, maxJitter time.Duration) *AdaptiveRateLimiter {
 	return &AdaptiveRateLimiter{
 		// Allow limit per second with a bucket capacity matching the req/s
-		limiter:   rate.NewLimiter(rate.Limit(reqPerSec), int(reqPerSec+1)), 
+		limiter:   rate.NewLimiter(rate.Limit(reqPerSec), int(reqPerSec+1)),
 		minJitter: minJitter,
 		maxJitter: maxJitter,
 	}
